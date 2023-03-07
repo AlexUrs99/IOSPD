@@ -1,0 +1,68 @@
+Serial-Port.pdf
+Page 25
+
+Exercise 1.13.2
+
+#define PORT Ox32
+#define BIT4 (1 << 4)
+
+Ox 00000001 << 4 ==> 00010000
+
+Using the __inp() and __outp() functions of the Marwin HW driver, write sequences of C instructions to perform the following: 
+
+a) Wait until the bit of the port defined by the BIT4 mask becomes set.
+
+while(__inp(PORT) != 1);
+Explanation: basically keep reading from the PORT until we reach 1
+
+b) Set the bit of the port defined by the BIT4 mask
+
+outp(__inp(PORT), __inp(PORT) | BIT4);
+
+Explanation: 
+PORT: 00000000
+BIT4: 00010000
+OR  : 00010000
+
+PORT: 00010000
+BIT4: 00010000
+OR  : 00010000
+
+As we can see, if we OR the bit from the PORT with the 1 bit from BIT4, the fourth bit will be set regardless of the PORT's 4th bit value.
+
+c) Clear the bit of the port defined by the BIT4 mask
+
+outp(__inp(PORT), (__inp(PORT) & (~BIT4)));
+
+Explanation:
+PORT               : 00000000
+BIT4~              : 11101111
+AND w/ B4 negated  : 00000000
+
+PORT		   : 00010000
+BIT4~              : 11101111
+AND w/ B4 negated  : 00000000
+
+Basically if we negate BIT4, the 4th bit becomes 0 so we just need to AND with it to get 0.
+
+d) Complement (toggle) the bit of the port defined by the BIT4 mask
+
+outp(__inp(PORT), __inp(PORT) ^ BIT4);
+
+Explanation:
+PORT               : 00000000
+BIT4               : 00010000
+XOR                : 00010000 (negated with success)
+
+PORT		   : 00010000
+BIT4               : 00010000
+XOR                : 00000000 (negated with success)
+
+Basically XOR fits perfectly here. 
+A B A xor B
+0 0    0
+0 1    1
+1 0    1
+1 1    0
+As you can see from XOR truth table, the value of A (PORT in our case) is inverted whenever the value of B (BIT4) is 1.
+

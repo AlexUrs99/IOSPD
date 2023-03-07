@@ -1,0 +1,12 @@
+void initCOM1() {
+	INT lcrValue = __inp(COM1_LCR);
+	__outp(COM1_LCR, lcrValue | LCR_DLAB);
+	__outp(COM1_DLR_LSB, 1);
+	__outp(COM1_DLR_MSB, 0);
+
+	INT lcrConfig = 0b00000011;
+	__outp(COM1_LCR, lcrConfig);
+
+	INT mcrConfig = 0b00001011;
+	__outp(COM1_MCR, mcrConfig);
+}

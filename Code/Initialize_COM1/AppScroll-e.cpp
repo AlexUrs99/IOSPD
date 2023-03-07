@@ -40,20 +40,44 @@ void DisplWindow(HWND hWnd);
 //--------------------------------------------------------------------
 
 void initCOM1() {
-
 	INT lcrValue = __inp(COM1_LCR);
 	__outp(COM1_LCR, lcrValue | LCR_DLAB);
-
 	__outp(COM1_DLR_LSB, 1);
 	__outp(COM1_DLR_MSB, 0);
-	
-	INT lcrConfig = 0b00000011;
 
+	INT lcrConfig = 0b00000011;
 	__outp(COM1_LCR, lcrConfig);
 
-	INT mcrCOnfig = 0b00001011;
+	INT mcrConfig = 0b00001011;
+	__outp(COM1_MCR, mcrConfig);
+}
 
-	__outp(COM1_MCR, mcrCOnfig);
+void sendStringOverToCOM1()
+{
+	char toSend[] = "StringToSend";
+	for (int i = 0; i < strlen(toSend); i++) {
+		sendCharacter(toSend[i]);
+	}
+}
+
+void sendCharacter(char c) {
+	__outp(COM1_THR, c);
+	while ((__inp(COM1_LSR) & LSR_THR_EMPTY) == 0); //Asa astepti pana cand se transmite caracterul
+}
+
+void receiveStringOverCOM1() {
+	char receivedString[] = "ReceivedString\\";
+	for (int i = 0; i < strlen(receivedString); i++) {
+		if (receivedString[i] != '\\') {
+			receiveCharacter();
+
+		}
+	}
+}
+
+INT receiveCharacter() {
+	while ((__inp(COM1_LSR) & LSR_DATA_READY) == 0);
+	return __inp(COM1_RBR);
 }
 
 int AppScroll(HWND hWnd)
@@ -72,7 +96,7 @@ int AppScroll(HWND hWnd)
 
 	// Clear the display buffer and the window contents
 	for (i = 0; i < NLIN; i++) {
-		memset (szBuffer[i], ' ', NCOL);
+		memset(szBuffer[i], ' ', NCOL);
 	}
 	cLine = 1;
 
@@ -81,10 +105,13 @@ int AppScroll(HWND hWnd)
 	cLine += 2;
 	DisplWindow(hWnd);
 
-//--------------------------------------------------------------------
-// To be completed with the application code
-//--------------------------------------------------------------------
+	initCOM1();
 
+	//1.13.7
+	sendStringOverToCOM1();
+
+	//1.13.8
+	receiveStringOverCOM1();
 
 	// Display the messages
 	DisplWindow(hWnd);
