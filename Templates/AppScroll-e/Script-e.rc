@@ -1,0 +1,44 @@
+#include <windows.h>
+#include "resource.h"
+
+IDR_SIEMENU1 MENU
+BEGIN
+    POPUP "File"
+    BEGIN
+        MENUITEM "&Open", ID_FILE_OPEN
+        MENUITEM "&Close", ID_FILE_CLOSE
+	MENUITEM SEPARATOR
+        MENUITEM "E&xit", ID_FILE_EXIT
+    END
+    POPUP "&Operations"
+    BEGIN
+        MENUITEM "&IOS Application", ID_OPER_OP0
+	MENUITEM SEPARATOR
+        MENUITEM "Operation &1", ID_OPER_OP1
+	MENUITEM SEPARATOR
+        MENUITEM "Operation &2", ID_OPER_OP2
+	MENUITEM SEPARATOR
+        MENUITEM "Operation &3", ID_OPER_OP3
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About...", ID_HELP_ABOUT
+    END
+END
+
+IDD_ABOUT DIALOG DISCARDABLE 0, 0, 210, 76
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About..."
+FONT 8, "Tahoma"
+BEGIN
+    GROUPBOX	  "IOS Application", IDC_STATIC, 7, 7, 195, 62
+    LTEXT	  "IOS application using the Marvin HW\r\n\
+                  driver for port and memory access\r\n\n\
+                  TUCN, Computer Science Department\r\n\
+                  IOS Laboratory, 2021", IDC_STATIC1, 16, 18, 150, 40
+    DEFPUSHBUTTON "&OK", IDOK, 150, 20, 44, 14	
+    PUSHBUTTON	  "&Cancel", IDCANCEL, 150, 44, 44, 14
+END
+
+IDI_SIEICON ICON "sie.ico"
+
