@@ -40,6 +40,11 @@ void DisplWindow(HWND hWnd);
 
 DWORD64  PciBaseAddress();
 
+DWORD readPCIHeader(INT busNumber, INT deviceNumber, INT functionNumber, INT offset) {
+	__outpdw(0x0CF8, 1 << 31 + busNumber << 16 + deviceNumber << 11 + functionNumber << 8 + offset << 2);
+	return 	__inpdw(0x0CFC);
+}
+
 PCI_CONFIG0* getPCIHeader(INT busNumber, INT deviceNumber, INT functionNumber) {
 	DWORD64 headerAddress = baseAddress + busNumber << 20
 		+ deviceNumber << 15 + functionNumber << 12;
@@ -82,42 +87,66 @@ int AppScroll(HWND hWnd)
 
 	wsprintf(szBuffer[cLine], "%llx", baseAddress);
 
-	for (int i = 0; i < 255; i++) {
+	for (int i = 0; i < 256; i++) {
 		for (int j = 0; j < 32; j++) {
 			for (int k = 0; k < 8; k++) {
-				PCI_CONFIG0* computedBaseAddress = getPCIHeader(i, j, k);
-				DWORD classCode = _inmw((DWORD_PTR)&computedBaseAddress->BaseClass);
-				DWORD subclassCode = _inmw((DWORD_PTR)&computedBaseAddress->SubClass);
-				DWORD programmingInterface = _inmw((DWORD_PTR)&computedBaseAddress->ProgInterface);
-				DWORD subsystemVendorId = _inmw((DWORD_PTR)&computedBaseAddress->SubSystVendorID);
-				DWORD subsystemId = _inmw((DWORD_PTR)&computedBaseAddress->SubSystID);
-				DWORD vendorId = _inmw((DWORD_PTR)&computedBaseAddress->VendorID);
-				DWORD deviceId = _inmw((DWORD_PTR)&computedBaseAddress->DeviceID);
+				DWORD classCode;
+				DWORD subclassCode;
 
-				//marker that device is valid or not 
-				if (vendorId != 0xFFFF && deviceId != 0xFFFF) {
-					wsprintf(szBuffer[cLine], "%x %x %x", i, j, k);
-					cLine++;
-					wsprintf(szBuffer[cLine], "%x %x %x %x %x", classCode, subclassCode, programmingInterface, subsystemVendorId, subsystemId);
-					cLine++;
-					for (int k2 = 0; k2 < 179; k2++) {
-						if (PciClassTable[k2].Class == classCode && PciClassTable[k2].SubClass == subclassCode && PciClassTable[k2].ProgIf == programmingInterface) {
-							wsprintf(szBuffer[cLine], "%s %s", PciClassTable[k2].ClassDesc, PciClassTable[k2].ProgIfDesc);
-						}
+				classCode = readPCIHeader(i, j, k, 2) >> 24;
+				subclassCode = (readPCIHeader(i, j, k, 2) >> 16) & 0x00FF;
+
+				if (classCode == 0x0C && subclassCode == 0x05) {
+					DWORD ba0 = readPCIHeader(i, j, k, 4);
+					DWORD ba1 = readPCIHeader(i, j, k, 5);
+					DWORD ba2 = readPCIHeader(i, j, k, 6);
+					DWORD ba3 = readPCIHeader(i, j, k, 7);
+					DWORD ba4 = readPCIHeader(i, j, k, 8);
+					DWORD ba5 = readPCIHeader(i, j, k, 9);
+
+					for (int i = 0; i < 6; i++) {
+						DWORD baseAddress = readPCIHeader(i, j, k, i + 4);
+						INT type = baseAddress >> 1 & 0x3;
+
+						if (type == 2) {
+							wsprintf(szBuffer[cLine], "BAR: %d TYPE: %s", baseAddress,  "64");
+						} else wsprintf(szBuffer[cLine], "BAR: %d TYPE: %s", baseAddress, "32");
 					}
-					cLine++;
-					for (int k2 = 0; k2 < 1568; k2++) {
-						if (PciVenTable[k2].VenId == vendorId) {
-							wsprintf(szBuffer[cLine], "%s %s", PciVenTable[k2].VenShort, PciVenTable[k2].VenFull);
-						}
+				
+
+					/*if (ba0 >> 1 & 0x3 == 2) {
+						wsprintf(szBuffer[cLine], "%llx %s", ba0, ba1, "64");
 					}
+					else wsprintf(szBuffer[cLine], "%llx %s", ba0, "32");
 					cLine++;
-					for (int k2 = 0; k2 < 7839; k2++) {
-						if (PciDevTable[k2].VenId == vendorId && PciDevTable[k2].DevId == deviceId) {
-							wsprintf(szBuffer[cLine], "%s", PciDevTable[k2].ChipDesc);
-						}
+
+					if (ba1 >> 1 & 0x3 == 2) {
+						wsprintf(szBuffer[cLine], "%llx %s", ba1, ba2, "64");
 					}
+					else wsprintf(szBuffer[cLine], "%llx %s", ba1, "32");
 					cLine++;
+
+					if (ba2 >> 1 & 0x3 == 2) {
+						wsprintf(szBuffer[cLine], "%llx %s", ba2, ba3, "64");
+					}
+					else wsprintf(szBuffer[cLine], "%llx %s", ba2, "32");
+					cLine++;
+
+					if (ba3 >> 1 & 0x3 == 2) {
+						wsprintf(szBuffer[cLine], "%llx %s", ba3, ba4, "64");
+					}
+					else wsprintf(szBuffer[cLine], "%llx %s", ba3, "32");
+					cLine++;
+
+					if (ba4 >> 1 & 0x3 == 2) {
+						wsprintf(szBuffer[cLine], "%llx %s", ba4, ba5, "64");
+					}
+					else wsprintf(szBuffer[cLine], "%llx %s", ba5, "32");
+					cLine++;
+
+					wsprintf(szBuffer[cLine], "%llx %s", ba5, "64");
+					cLine++;
+					*/
 				}
 			}
 		}
